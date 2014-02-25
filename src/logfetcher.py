@@ -2,26 +2,19 @@
 
 __author__ = "benj.renard@gmail.com"
 
-import zmq
-
 import logging
+import optparse
 import re
 import sys
 import threading
 
-import pdb
-
+import zmq
 from zmq.eventloop import ioloop, zmqstream
 
 from swabber_interface import SwabberConn
 from simple_live_sniffer import SimpleLiveSniffer
 
-#BINDSTRING = "tcp://127.0.0.1:22621"
-# TODO: change port to botbanger's ??
-BINDSTRING = "tcp://127.0.0.1:22621"
-
 BOTBANGER_LOG = "botbanger_log"
-
 
 class LogFetcher(threading.Thread):
 
@@ -32,7 +25,7 @@ class LogFetcher(threading.Thread):
         #we need to load the models
         model_list = open("conf/botbanger.conf")
         for cur_model_file in model_list:
-            cur_model_file = cur_model_file.strip('\n') 
+            cur_model_file = cur_model_file.strip('\n')
             if cur_model_file: #ignore empty lines
                 with open("conf/"+cur_model_file) as cur_model:
                     self._live_sniffer.addFailModel(cur_model.read())
@@ -41,25 +34,10 @@ class LogFetcher(threading.Thread):
         self.socket = context.socket(zmq.SUB)
         subscriber = zmqstream.ZMQStream(self.socket)
         self.socket.setsockopt(zmq.SUBSCRIBE, BOTBANGER_LOG)
-        self.socket.connect(BINDSTRING)
+        self.socket.connect(bindstring)
         threading.Thread.__init__(self)
         subscriber.on_recv(self.subscription)
-
-    # def __init__(self, bindstring, verbose=False):
-    #     self.bindstring = bindstring
-
-    #     self._swabber_interface = SwabberConn
-    #     self._live_sniffer = SimpleLiveSniffer
-
-    #     context = zmq.Context()
-    #     self.socket = context.socket(zmq.SUB)
-    #     subscriber = zmqstream.ZMQStream(self.socket)
-    #     self.socket.setsockopt(zmq.SUBSCRIBE, BOTBANGER_LOG)
-    #     self.socket.connect(bindstring)
-
-    #     threading.Thread.__init__(self)
-
-    #     subscriber.on_recv(self.subscription)
+        self.loop = ioloop.IOLoop.instance()
 
     def subscription(self, message):
         action, ipaddress = message[0:2]
@@ -67,10 +45,10 @@ class LogFetcher(threading.Thread):
         ipaddress = ipaddress.strip()
         ipmatch = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
         if not ipmatch.match(ipaddress):
-            logging.error("Failed to validate IP address %s - rejecting", ipaddress)
+            logging.error("Failed to validate IP address %s - rejecting",
+                          ipaddress)
             return False
-        
-        #pdb.set_trace()
+
         if action == BOTBANGER_LOG:
 
             logging.debug("Received log for ip = %s", message[1])
@@ -99,22 +77,51 @@ class LogFetcher(threading.Thread):
         else:
             logging.info("%s doesn't seem to be a bot", log_rec["host"])
 
-    def stopIt(self):
+    def stop(self):
         self.loop.stop()
 
     def run(self):
-        self.loop = ioloop.IOLoop.instance().start()
+        self.loop.start()
+
+def main():
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbose", dest="verbose",
+                      help="Be verbose in output, don't daemonise",
+                      action="store_true")
+
+    parser.add_option("-B", "--bindstring",
+                      action="store", dest="bindstring",
+                      default="tcp://127.0.0.1:22621",
+                      help="URI to bind to")
+
+    parser.add_option("-L", "--logfile",
+                      action="store", dest="logfile",
+                      default="/usr/local/trafficserver/logs/logfetcher.log",
+                      help="File to log to")
+
+    (options, args) = parser.parse_args()
+
+    if options.verbose:
+        mainlogger = logging.getLogger()
+        logging.basicConfig(level=logging.DEBUG)
+        log_stream = logging.StreamHandler(sys.stdout)
+        log_stream.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        log_stream.setFormatter(formatter)
+        mainlogger.addHandler(log_stream)
+    else:
+        logger = logging.getLogger('logfetcher')
+        hdlr = logging.FileHandler(options.logfile)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr)
+        logger.setLevel(logging.DEBUG)
+
+    lfetcher = LogFetcher(options.bindstring, options.verbose)
+    lfetcher.run()
 
 if __name__ == "__main__":
-    verbose = True
 
-    mainlogger = logging.getLogger()
-    logging.basicConfig(level=logging.DEBUG)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    mainlogger.addHandler(ch)
-
-    lfetcher = LogFetcher(BINDSTRING, verbose)
-    lfetcher.run()
+    main()
