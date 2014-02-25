@@ -1,0 +1,3 @@
+[submodule "learn2ban"]
+	path = learn2ban
+	url = git@github.com:equalitie/Learn2ban
