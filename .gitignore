@@ -39,5 +39,3 @@ nosetests.xml
 \#*\#
 .\#*
 
-#don't touch learn2ban dir so symlinking it doesn't affect submoduleness
-/learn2ban
