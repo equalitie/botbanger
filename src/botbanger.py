@@ -11,8 +11,7 @@ import threading
 import zmq
 from zmq.eventloop import ioloop, zmqstream
 
-from botbanger.swabber_interface import SwabberConn
-from botbanger.simple_live_sniffer import SimpleLiveSniffer
+from botbanger import SwabberConn, SimpleLiveSniffer
 
 BOTBANGER_LOG = "botbanger_log"
 

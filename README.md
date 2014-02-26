@@ -21,7 +21,7 @@ along with this program.  If not, see `<http://www.gnu.org/licenses/>`.
 Installation
 ============
 
-Other than cloning the git hub repo there is no need installation for Botbanger other than Python 2.7. However, in order to run Botbanger you will need to have already created a Learn2ban pickled model. See `https://github.com/equalitie/Learn2ban` for more details on creating a Learn2ban model.
+Other than cloning the git hub repo there is no need installation for Botbanger other than Python 2.7. However, in order to run Botbanger you will need to have already created a Learn2ban pickled model. See `https://github.com/equalitie/learn2ban` for more details on creating a Learn2ban model.
 
 
 
@@ -32,7 +32,7 @@ Run python unit tests in the Botbanger/src/test/ directory to ensure functionali
 
 Configuration
 =============
-Once you have created a Learn2ban model pickle place it in the directory Botbanger/src/conf and edit the botbanger.conf file giving it the name of the pickled model.
+Once you have created a Learn2ban model pickle place it in the directory botbanger/src/conf and edit the botbanger.conf file giving it the name of the pickled model.
 
 To run Botbanger in conjunction with Swabber you must set the Swabber listening port to 22622 on localhost.
 
@@ -41,6 +41,6 @@ Running
 
 To run Botbanger simply execute the following
 
-python src/logfetcher.py
+python src/botbanger.py
 
 This project forms part of the [Deflect](https://deflect.ca) project.
