@@ -18,7 +18,7 @@ setup(
         "Topic :: Daemons",
         "License :: GNU Affero License",
         ],
-    scripts = ["src/logfetcher.py"],
+    scripts = ["src/botbanger.py"],
     data_files=[
         ("/etc/botbanger", ["conf/botbanger.conf"])
         ],
