@@ -11,23 +11,23 @@ import threading
 import zmq
 from zmq.eventloop import ioloop, zmqstream
 
-from swabber_interface import SwabberConn
-from simple_live_sniffer import SimpleLiveSniffer
+from botbanger.swabber_interface import SwabberConn
+from botbanger.simple_live_sniffer import SimpleLiveSniffer
 
 BOTBANGER_LOG = "botbanger_log"
 
 class LogFetcher(threading.Thread):
 
-    def __init__(self, bindstring, verbose=False):
+    def __init__(self, bindstring, conf_file, verbose=False):
         self._swabber_interface = SwabberConn("127.0.0.1", 22622)
         self._live_sniffer = SimpleLiveSniffer()
 
         #we need to load the models
-        model_list = open("conf/botbanger.conf")
+        model_list = open(conf_file)
         for cur_model_file in model_list:
             cur_model_file = cur_model_file.strip('\n')
             if cur_model_file: #ignore empty lines
-                with open("conf/"+cur_model_file) as cur_model:
+                with open(cur_model_file) as cur_model:
                     self._live_sniffer.addFailModel(cur_model.read())
 
         context = zmq.Context()
@@ -99,6 +99,11 @@ def main():
                       default="/usr/local/trafficserver/logs/logfetcher.log",
                       help="File to log to")
 
+    parser.add_option("-c", "--conf",
+                      action="store", dest="conffile",
+                      default="/etc/botbanger/botbanger.conf",
+                      help="Path to config file")
+
     (options, args) = parser.parse_args()
 
     if options.verbose:
@@ -119,7 +124,7 @@ def main():
         logger.addHandler(hdlr)
         logger.setLevel(logging.DEBUG)
 
-    lfetcher = LogFetcher(options.bindstring, options.verbose)
+    lfetcher = LogFetcher(options.bindstring, options.conffile, options.verbose)
     lfetcher.run()
 
 if __name__ == "__main__":
